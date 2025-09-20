@@ -34,16 +34,69 @@ npm install
 node server.js
 
 project-root/
-├── controllers/
-├── models/
-├── routes/ 
-├── middleware/
 ├── config/
-├── tests/
-├── server.js
+│   └── db.js
+├── controllers/
+│   ├── authController.js
+│   ├── cartController.js
+│   ├── orderController.js
+│   └── productController.js
+├── middleware/
+│   └── auth.js
+├── models/
+│   ├── Cart.js
+│   ├── Order.js
+│   ├── Product.js
+│   └── User.js
+├── routes/
+│   ├── authRoutes.js
+│   ├── cartRoutes.js
+│   ├── orderRoutes.js
+│   └── productRoutes.js
+├── utils/
+│   └── payment.js
 ├── .env
-├── .gitignore
+├── server.js
 └── README.md
+
+
+
+## API Endpoints
+
+## Authentication
+
+| Method | Endpoint       | Description             |
+| ------ | -------------- | ----------------------- |
+| POST   | `/auth/signup` | Register new user       |
+| POST   | `/auth/login`  | Login user & return JWT |
+
+
+## Product Routes
+
+| Method | Endpoint        | Description        | Access     |
+| ------ | --------------- | ------------------ | ---------- |
+| GET    | `/products`     | Get all products   | Public     |
+| GET    | `/products/:id` | Get single product | Public     |
+| POST   | `/products`     | Create product     | Admin only |
+| PATCH  | `/products/:id` | Update product     | Admin only |
+| DELETE | `/products/:id` | Delete product     | Admin only |
+
+## Cart Routes
+
+| Method | Endpoint           | Description           |
+| ------ | ------------------ | --------------------- |
+| POST   | `/cart/add`        | Add product to cart   |
+| GET    | `/cart`            | View user cart        |
+| DELETE | `/cart/remove/:id` | Remove item from cart |
+
+## Orders Routes
+
+| Method | Endpoint           | Description                |
+| ------ | ------------------ | -------------------------- |
+| POST   | `/orders/checkout` | Create order from cart     |
+| POST   | `/orders/confirm`  | Confirm payment simulation |
+| GET    | `/orders`          | View all user orders       |
+| GET    | `/orders/:id`      | View single order          |
 
 
 ## Technologies used
