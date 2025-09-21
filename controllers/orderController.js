@@ -2,6 +2,7 @@
 
 const Order = require('../models/order');
 const Cart = require('../models/cart');
+const Product = require('../models/product');
 const { simulatePayment } = require('../utils/payment');
 
 
@@ -15,10 +16,18 @@ exports.createOrder = async (req, res, next) => {
 			return res.status(400).json({ message: 'Cart is empty'});
 
 
-		const order= await Order.create({
-			user: req.user._id,
-			items: cart.items
-		});
+		// create items snapshot
+	    const orderItems = cart.items.map(i => ({
+	      product: i.product._id,
+	      quantity: i.quantity,
+	      priceAtPurchase: i.product.price
+	    }));
+
+		 const order = await Order.create({
+	      user: req.user._id,
+	      items: orderItems,
+	      status: 'pending'
+	    });
 
 		// clear cart after order
    		await Cart.deleteOne({ user: req.user._id });
@@ -38,15 +47,51 @@ exports.createOrder = async (req, res, next) => {
 exports.confirmOrder = async (req, res, next) => {
 
 	try {
-		const order = await Order.findById(req.body.orderId);
-		if(!order)
-			return res.status(404).json({ message: 'Order not found'});
+
+		const { orderId } = req.body;
+        if (!orderId) 
+        	return res.status(400).json({ message: 'orderId required' });
+
+
+		const order = await Order.findById(orderId).populate("items.product");
+        if (!order) 
+        	return res.status(404).json({ message: 'Order not found' });
+
 	
 		const success = simulatePayment();
-		order.status = success ? 'paid' : 'failed';
+		if (!success) {
+	      order.status = 'failed';
+	      await order.save();
+	      return res.json({ message: 'Payment failed', order });
+	    }
 
-		await order.save();
 
+	     // verify stock again and deduct
+	    for (const it of order.items) {
+	      const prod = await Product.findById(it.product._id || it.product);
+	      if (!prod) {
+	        order.status = 'failed - product missing';
+	        await order.save();
+	        return res.status(400).json({ message: `Product ${it.product._id || it.product} not found` });
+	      }
+	      if (prod.stock < it.quantity) {
+	        order.status = 'failed - insufficient stock';
+	        await order.save();
+	        return res.status(400).json({ message: `Not enough stock for product ${prod._id}` });
+	      }
+	    }
+
+	    // deduct stock
+	    for (const it of order.items) {
+	      const prod = await Product.findById(it.product._id || it.product);
+	      prod.stock = prod.stock - it.quantity;
+	      await prod.save();
+	    }
+
+	    order.status = 'paid';
+	    await order.save();
+
+	  
 		res.status(200).json({ 
 			message: 'Order confirmation updated',
 			order
@@ -63,6 +108,9 @@ exports.getOrder = async (req, res, next) => {
 		const getOrder = await Order.find({ user: req.user._id })
 												.populate("items.product");
   
+  	 if (!getOrder) 
+  	 	return res.status(404).json({ message: 'Order not found' });
+
   	res.json(getOrder);
 
 	} catch (err) {
@@ -81,7 +129,7 @@ exports.getOrderById = async (req, res, next) => {
 			return res.status(404).json({ message: 'Order not found'});
 
 		res.json({
-			message: 'Here is the order',
+			message: 'Order retrieved successfully',
 			order
 		});
 

@@ -99,6 +99,15 @@ project-root/
 | GET    | `/orders/:id`      | View single order          |
 
 
+## Admin Routes
+
+| Method | Endpoint                    | Description                |
+| ------ | --------------------------- | -------------------------- |
+| GET    | `/admin/orders`             | Get all orders             |
+| PATCH  | `/admin/orders/:id/status`  | Update order status        |
+
+
+
 ## Technologies used
 -Node.js
 -Express.js
@@ -107,6 +116,7 @@ project-root/
 -Bcrypt.js (password hashing)
 -dotenv (environment variables)
 -Helmet, Express-rate-limit, Mongo-sanitize, XSS-clean
+-Joi
 
 
 ## Author name

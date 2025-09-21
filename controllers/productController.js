@@ -1,17 +1,23 @@
 //controllers/productController.js
 
 const Product = require('../models/product.js');
-const User = require('../models/User.js')
+const User = require('../models/User.js');
+const { createProductSchema, updateProductSchema } = require('../utils/productValidation');
+
 
 //POST Create a product
 exports.createProduct = async (req, res, next) => {
+
+	const { error } = createProductSchema.validate(req.body);
+    if (error) return res.status(400).json({ message: error.details[0].message });
+
 	try {
 		const { name, price, stock, description} = req.body;
 		const user = req.user;
 
 		//Validate products requirements
-		 if (name == null || price == null || stock == null || !description)
-			return res.status(400).json({ message: 'All the fields are required'});
+		// if (name == null || price == null || stock == null || !description)
+		//	return res.status(400).json({ message: 'All the fields are required'});
 
 		if(!user)
 			return res.status(401).json({ message: 'User not authenticated'});
@@ -110,6 +116,11 @@ exports.getProductById = async (req, res, next) => {
 
 //PATCH   Patch product by id
 exports.patchProduct = async (req, res, next) => {
+
+	const { error } = updateProductSchema.validate(req.body);
+    if (error) return res.status(400).json({ message: error.details[0].message });
+
+
 	try {
 
 		const { name, price, stock, description } = req.body;
@@ -135,7 +146,7 @@ exports.patchProduct = async (req, res, next) => {
 
 		await getProduct.save();
 
-		res.status(201).json({
+		res.status(200).json({
 			message: 'Product records updated successfully',
 			getProduct
 		});
